@@ -26,7 +26,13 @@ init([]) ->
            restart => permanent,
            shutdown => infinity,
            type => supervisor,
-           modules => [airbro_gateway_sup]}],
+           modules => [airbro_gateway_sup]},
+         #{id => airbro_broadcast_sup,
+           start => {airbro_broadcast_sup, start_link, []},
+           restart => permanent,
+           shutdown => infinity,
+           type => supervisor,
+           modules => [airbro_broadcast_sup]}],
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions

@@ -25,4 +25,14 @@ add_topic_id(TopicId) ->
     gen_server:call(airbro_gateway, {add_topic_id, TopicId}).
 
 broadcast() ->
-    airbro_broadcast:start(9800).
+    Sock = gen_server:call(airbro_broadcast, {start, 9800}),
+    listen(Sock).
+
+listen(Sock) ->
+    io:format("expecting publishes"),
+    receive
+        {udp, Socket, Host, Port, _Bin} = Msg ->
+            io:format("server received:~p~n", [Msg]),
+            gen_udp:send(Socket, Host, Port, term_to_binary(any)),
+            listen(Sock)
+    end.
