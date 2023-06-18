@@ -23,4 +23,3 @@ subscribe(ClientId, TopicId) ->
 
 add_topic_id(TopicId) ->
     gen_server:call(airbro_gateway, {add_topic_id, TopicId}).
-
