@@ -13,6 +13,7 @@
 -define(SERVER, ?MODULE).
 
 start(_StartType, _StartArgs) ->
+    airbro_dashboard_server:setup(),
     airbro_sup:start_link().
 
 stop(_State) ->

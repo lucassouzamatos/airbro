@@ -40,4 +40,3 @@ handle_info({udp, Socket, Host, Port, Bin} = _Msg, State) ->
     {noreply, State};
 handle_info(_Info, State) ->
     {noreply, State}.
-

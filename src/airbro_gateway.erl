@@ -32,6 +32,9 @@ handle_call({subscribe, {ClientId, TopicId}}, _From, State) ->
                 log(client_subscribed, [ClientId])
         end,
     {reply, Reply, State};
+handle_call({get_topics}, _From, State) ->
+    Reply = ets:tab2list(?TOPICS_TABLE),
+    {reply, Reply, State};
 handle_call(_Msg, _From, State) ->
     {noreply, State}.
 

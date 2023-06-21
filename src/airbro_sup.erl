@@ -17,22 +17,30 @@ start_link() ->
 
 init([]) ->
     SupFlags =
-        #{strategy => one_for_all,
-          intensity => 0,
-          period => 1},
+        #{
+            strategy => one_for_all,
+            intensity => 0,
+            period => 1
+        },
     ChildSpecs =
-        [#{id => airbro_gateway_sup,
-           start => {airbro_gateway_sup, start_link, []},
-           restart => permanent,
-           shutdown => infinity,
-           type => supervisor,
-           modules => [airbro_gateway_sup]},
-         #{id => airbro_broadcast_sup,
-           start => {airbro_broadcast_sup, start_link, []},
-           restart => permanent,
-           shutdown => infinity,
-           type => supervisor,
-           modules => [airbro_broadcast_sup]}],
+        [
+            #{
+                id => airbro_gateway_sup,
+                start => {airbro_gateway_sup, start_link, []},
+                restart => permanent,
+                shutdown => infinity,
+                type => supervisor,
+                modules => [airbro_gateway_sup]
+            },
+            #{
+                id => airbro_broadcast_sup,
+                start => {airbro_broadcast_sup, start_link, []},
+                restart => permanent,
+                shutdown => infinity,
+                type => supervisor,
+                modules => [airbro_broadcast_sup]
+            }
+        ],
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions

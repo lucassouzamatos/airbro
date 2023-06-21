@@ -17,11 +17,17 @@ start_link() ->
 
 init([]) ->
     SupFlags =
-        #{strategy => one_for_all,
-          intensity => 1,
-          period => 1},
+        #{
+            strategy => one_for_all,
+            intensity => 1,
+            period => 1
+        },
     ChildSpecs =
-        [#{id => airbro_broadcast,
-           restart => transient,
-           start => {airbro_broadcast, start_link, []}}],
+        [
+            #{
+                id => airbro_broadcast,
+                restart => transient,
+                start => {airbro_broadcast, start_link, []}
+            }
+        ],
     {ok, {SupFlags, ChildSpecs}}.
