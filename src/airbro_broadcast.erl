@@ -18,7 +18,7 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init(_Args) ->
-    {ok, Sock} = gen_udp:open(9800, [binary, {broadcast, true}]),
+    {ok, Sock} = gen_udp:open(9801, [binary, {broadcast, true}]),
     {ok, #state{sock = Sock}}.
 
 handle_cast(_Request, State) ->

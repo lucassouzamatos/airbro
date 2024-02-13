@@ -12,7 +12,7 @@ setup() ->
     Routes = [{'_', [{"/topics", airbro_dashboard_topics, []}]}],
     Dispatch = cowboy_router:compile(Routes),
     Env = #{env => #{dispatch => Dispatch}},
-    Opts = [{ip, {0, 0, 0, 0}}, {port, 2938}],
+    Opts = [{ip, {0, 0, 0, 0}}, {port, 2939}],
 
     cowboy:start_clear(airbro_dashboard_rest_api, Opts, Env),
 

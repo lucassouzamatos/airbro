@@ -4,12 +4,20 @@
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2]).
 -export([start_link/0]).
+-export([add_topic_id/1, get_topic_id/1]).
 
 -define(SERVER, ?MODULE).
 -define(TOPICS_TABLE, airbro_gateway_topics).
 -define(TOPICS_CLIENTS_TABLE, airbro_gateway_topics_clients).
 
 -record(topic_client, {client :: atom(), topic :: atom()}).
+
+% public api
+add_topic_id(TopicId) ->
+    gen_server:call(?MODULE, {add_topic_id, TopicId}).
+
+get_topic_id(TopicName) ->
+    gen_server:call(?MODULE, {get_topic_id, TopicName}).
 
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
@@ -34,6 +42,9 @@ handle_call({subscribe, {ClientId, TopicId}}, _From, State) ->
     {reply, Reply, State};
 handle_call({get_topics}, _From, State) ->
     Reply = ets:tab2list(?TOPICS_TABLE),
+    {reply, Reply, State};
+handle_call({get_topic_id, TopicName}, _From, State) ->
+    Reply = ets:lookup_element(?TOPICS_TABLE, TopicName, 1),
     {reply, Reply, State};
 handle_call(_Msg, _From, State) ->
     {noreply, State}.

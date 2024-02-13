@@ -20,11 +20,17 @@ handle_binary(
     make_response_message(<<?CONNACK:8, 16#00:8>>);
 % TODO: use TopicId when is sent by a GW
 handle_binary(
-    <<_Length:8, ?REGISTER:8, _TopicId:16, MsgId:16, _TopicName/binary>> =
+    <<_Length:8, ?REGISTER:8, _TopicId:16, MsgId:16, TopicName/binary>> =
         _Bin
 ) ->
-    TopicIdResponse = 88,
-    make_response_message(<<?REGACK:8, TopicIdResponse:16, MsgId:16, 16#00:8>>);
+    airbro_gateway:add_topic_id(TopicName),
+    A = airbro_gateway:get_topic_id(TopicName),
+
+    erlang:display("A"),
+    erlang:display(A),
+    % erlang:display(<<TopicName>>),
+    % TopicId = unicode:characters_to_binary(TopicName),
+    make_response_message(<<?REGACK:8, TopicName/binary, MsgId:16, 16#00:8>>);
 % TODO: implement duration time to disconnect like in official documentation
 handle_binary(<<_Length:8, ?DISCONNECT:8, _Duration/binary>> = _Bin) ->
     make_response_message(<<?DISCONNECT:8>>);
@@ -34,6 +40,7 @@ handle_binary(
         Data/binary>> =
         _Bin
 ) ->
+    erlang:display(TopicId),
     case QoS of
         0 ->
             skip;
