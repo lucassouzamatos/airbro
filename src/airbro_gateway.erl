@@ -4,7 +4,7 @@
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2]).
 -export([start_link/0]).
--export([add_topic_id/1, get_topic_id/1]).
+-export([register_topic/1, get_topic_id/1]).
 
 -define(SERVER, ?MODULE).
 -define(TOPICS_TABLE, airbro_gateway_topics).
@@ -13,11 +13,11 @@
 -record(topic_client, {client :: atom(), topic :: atom()}).
 
 % public api
-add_topic_id(TopicId) ->
-    gen_server:call(?MODULE, {add_topic_id, TopicId}).
+register_topic(Name) ->
+    gen_server:call(?MODULE, {register_topic, Name}).
 
-get_topic_id(TopicName) ->
-    gen_server:call(?MODULE, {get_topic_id, TopicName}).
+get_topic_id(Name) ->
+    gen_server:call(?MODULE, {get_topic_id, Name}).
 
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
@@ -27,16 +27,16 @@ init(_Args) ->
     create_tables(),
     {ok, []}.
 
-handle_call({add_topic_id, TopicId}, _From, State) ->
-    insert_topic_id(TopicId),
-    {reply, log(topic_added, [TopicId]), State};
-handle_call({subscribe, {ClientId, TopicId}}, _From, State) ->
+handle_call({register_topic, Name}, _From, State) ->
+    TopicId = insert_topic(Name),
+    {reply, TopicId, State};
+handle_call({subscribe, {ClientId, Name}}, _From, State) ->
     Reply =
-        case lookup_topic(TopicId) of
-            not_found ->
-                log(topic_not_found, [TopicId]);
-            _ ->
-                subscribe_client(ClientId, TopicId),
+        case lookup_topic(Name) of
+            {not_found} ->
+                log(topic_not_found, [Name]);
+            {found, _} ->
+                subscribe_client(ClientId, Name),
                 log(client_subscribed, [ClientId])
         end,
     {reply, Reply, State};
@@ -59,20 +59,27 @@ handle_info(_Info, State) ->
 
 %% table functions
 
-lookup_topic(TopicId) ->
-    case ets:lookup(?TOPICS_TABLE, TopicId) of
+lookup_topic(Name) ->
+    case ets:lookup(?TOPICS_TABLE, Name) of
         [] ->
-            not_found;
-        [_] ->
-            found
+            {not_found};
+        [Item] ->
+            {found, Item}
     end.
 
 create_tables() ->
     ets:new(?TOPICS_TABLE, [named_table, set, public]),
     ets:new(?TOPICS_CLIENTS_TABLE, [named_table, set, public]).
 
-insert_topic_id(TopicId) ->
-    true = ets:insert(?TOPICS_TABLE, {TopicId}).
+insert_topic(TopicName) ->
+    case lookup_topic(TopicName) of
+        {not_found} ->
+            {_, [TopicId | _]} = rand:seed(exsplus),
+            true = ets:insert(?TOPICS_TABLE, {TopicName, TopicId}),
+            TopicId;
+        {found, {_Name, TopicId}} ->
+            TopicId
+    end.
 
 subscribe_client(ClientId, TopicId) ->
     true =

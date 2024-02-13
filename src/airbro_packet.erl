@@ -2,6 +2,8 @@
 
 -export([handle_binary/1]).
 
+-include_lib("kernel/include/logger.hrl").
+
 % Types of messages
 -define(CONNECT, 16#04).
 -define(CONNACK, 16#05).
@@ -17,22 +19,19 @@ handle_binary(
         _ClientId/binary>> =
         _Bin
 ) ->
+    ?LOG_DEBUG("Packet::CONNECTED"),
     make_response_message(<<?CONNACK:8, 16#00:8>>);
 % TODO: use TopicId when is sent by a GW
 handle_binary(
     <<_Length:8, ?REGISTER:8, _TopicId:16, MsgId:16, TopicName/binary>> =
         _Bin
 ) ->
-    airbro_gateway:add_topic_id(TopicName),
-    A = airbro_gateway:get_topic_id(TopicName),
-
-    erlang:display("A"),
-    erlang:display(A),
-    % erlang:display(<<TopicName>>),
-    % TopicId = unicode:characters_to_binary(TopicName),
-    make_response_message(<<?REGACK:8, TopicName/binary, MsgId:16, 16#00:8>>);
+    ?LOG_DEBUG(string:join(["Packet", "TOPIC_REGISTER", TopicName], "::")),
+    TopicId = airbro_gateway:register_topic(TopicName),
+    make_response_message(<<?REGACK:8, TopicId:16, MsgId:16, 16#00:8>>);
 % TODO: implement duration time to disconnect like in official documentation
 handle_binary(<<_Length:8, ?DISCONNECT:8, _Duration/binary>> = _Bin) ->
+    ?LOG_DEBUG("Packet::DISCONNECT"),
     make_response_message(<<?DISCONNECT:8>>);
 handle_binary(
     <<_Length:8, ?PUBLISH:8, _Dup:1, QoS:2, _Retain:1, _Will:1, _CleanSession:1, _TopicIdType:2,
@@ -40,7 +39,7 @@ handle_binary(
         Data/binary>> =
         _Bin
 ) ->
-    erlang:display(TopicId),
+    ?LOG_DEBUG(string:join(["Packet", "PUBLISH", integer_to_list(TopicId), integer_to_list(MsgId), Data], "::")),
     case QoS of
         0 ->
             skip;
