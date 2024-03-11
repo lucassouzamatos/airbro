@@ -1,9 +1,9 @@
-airbro
-=====
+<samp>
+### airbro
 
-An OTP application
+a message broker experiment using MQTT-SN protocol
 
-Build
------
+you can see some examples in `scripts` folder.
 
-    $ rebar3 compile
+*currently, highly in development*
+<samp>
