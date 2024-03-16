@@ -2,18 +2,13 @@
 
 -export([setup/0]).
 
-start_dependencies() ->
-    application:start(ranch),
-    application:start(cowboy).
+-record(route, {path :: string(), handler :: atom()}).
+
+routes() ->
+    [
+        #route{path = "/topics", handler = airbro_dashboard_topics}
+    ].
 
 setup() ->
-    start_dependencies(),
-
-    Routes = [{'_', [{"/topics", airbro_dashboard_topics, []}]}],
-    Dispatch = cowboy_router:compile(Routes),
-    Env = #{env => #{dispatch => Dispatch}},
-    Opts = [{ip, {0, 0, 0, 0}}, {port, 2939}],
-
-    cowboy:start_clear(airbro_dashboard_rest_api, Opts, Env),
-
+    airbro_server:setup(routes()),
     {ok, []}.

@@ -39,7 +39,11 @@ handle_binary(
         Data/binary>> =
         _Bin
 ) ->
-    ?LOG_DEBUG(string:join(["Packet", "PUBLISH", integer_to_list(TopicId), integer_to_list(MsgId), Data], "::")),
+    ?LOG_DEBUG(
+        string:join(
+            ["Packet", "PUBLISH", integer_to_list(TopicId), integer_to_list(MsgId), Data], "::"
+        )
+    ),
     case QoS of
         0 ->
             skip;
