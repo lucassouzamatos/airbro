@@ -4,17 +4,21 @@
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2]).
 -export([start_link/0]).
--export([register_topic/1, get_topic_id/1]).
+-export([register_topic/1, get_topic_id/1, subscribe/2, get_subscribed_clients/1]).
 
 -define(SERVER, ?MODULE).
 -define(TOPICS_TABLE, airbro_gateway_topics).
 -define(TOPICS_CLIENTS_TABLE, airbro_gateway_topics_clients).
 
--record(topic_client, {client :: atom(), topic :: atom()}).
-
 % public api
 register_topic(Name) ->
     gen_server:call(?MODULE, {register_topic, Name}).
+
+subscribe(Socket, TopicName) ->
+    gen_server:call(?MODULE, {subscribe, {Socket, TopicName}}).
+
+get_subscribed_clients(TopicId) ->
+    gen_server:call(?MODULE, {get_subscribed_socket_clients, {TopicId}}).
 
 get_topic_id(Name) ->
     gen_server:call(?MODULE, {get_topic_id, Name}).
@@ -30,16 +34,13 @@ init(_Args) ->
 handle_call({register_topic, Name}, _From, State) ->
     TopicId = insert_topic(Name),
     {reply, TopicId, State};
-handle_call({subscribe, {ClientId, Name}}, _From, State) ->
-    Reply =
-        case lookup_topic(Name) of
-            {not_found} ->
-                log(topic_not_found, [Name]);
-            {found, _} ->
-                subscribe_client(ClientId, Name),
-                log(client_subscribed, [ClientId])
-        end,
-    {reply, Reply, State};
+handle_call({subscribe, {Socket, TopicName}}, _From, State) ->
+    TopicId = insert_topic(TopicName),
+    subscribe_client(Socket, TopicId),
+    {reply, TopicId, State};
+handle_call({get_subscribed_socket_clients, {TopicId}}, _From, State) ->
+    Subs = get_subscribed_socket_clients(TopicId),
+    {reply, Subs, State};
 handle_call({get_topics}, _From, State) ->
     Reply = ets:tab2list(?TOPICS_TABLE),
     {reply, Reply, State};
@@ -74,16 +75,24 @@ create_tables() ->
 insert_topic(TopicName) ->
     case lookup_topic(TopicName) of
         {not_found} ->
-            {_, [TopicId | _]} = rand:seed(exsplus),
+            {_, [SeedValue | _]} = rand:seed(exsplus),
+            TopicId = SeedValue rem 10000,
             true = ets:insert(?TOPICS_TABLE, {TopicName, TopicId}),
             TopicId;
         {found, {_Name, TopicId}} ->
             TopicId
     end.
 
-subscribe_client(ClientId, TopicId) ->
-    true =
-        ets:insert(?TOPICS_CLIENTS_TABLE, #topic_client{client = ClientId, topic = TopicId}).
+subscribe_client(ClientSocket, TopicId) ->
+    true = ets:insert(?TOPICS_CLIENTS_TABLE, {TopicId, ClientSocket}).
+
+get_subscribed_socket_clients(TopicId) ->
+    case ets:lookup(?TOPICS_CLIENTS_TABLE, TopicId) of
+        [] ->
+            not_found;
+        Items ->
+            [Item || {_, Item} <- Items]
+    end.
 
 %% logger functions
 

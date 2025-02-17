@@ -28,7 +28,11 @@ handle_call(_Msg, _From, State) ->
     {noreply, State}.
 
 handle_info({udp, Socket, Host, Port, Bin} = _Msg, State) ->
-    Response = airbro_packet:handle_binary(Bin),
+    Response =
+        airbro_packet:handle_binary(Bin,
+                                    #{socket => Socket,
+                                      host => Host,
+                                      port => Port}),
     case Response of
         not_implemented ->
             ok;
